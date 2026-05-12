@@ -38,7 +38,6 @@ The project is divided into two main parts:
      ```bash
      npm start
      ```
-   - The backend server will run (typically on `http://localhost:3000`).
 
 2. **Frontend Setup**:
    - Open the frontend files (`frontend/index.html` and `frontend/admin.html`) in your web browser. Or, use a static file server like Live Server (VS Code extension) to serve the `frontend` directory.

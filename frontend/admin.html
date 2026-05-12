@@ -1,166 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin — Essence Salon & Spa</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--green:#2D5016;--green2:#3D6B1F;--gold:#B8963E;--cream:#FAF7F0;--dark:#1A1A12;--mid:#6B6345;--white:#fff;--border:#e8e0cc;--danger:#c0392b;--success:#27ae60;--warn:#d4841a}
-body{background:#f4f0e8;color:var(--dark);font-family:'Outfit',sans-serif;font-size:14px}
-header{background:var(--green);color:white;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between}
-header h1{font-size:1.2rem;font-weight:600;letter-spacing:0.05em}
-header a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:0.8rem}
-header a:hover{color:white}
-.container{max-width:1200px;margin:0 auto;padding:2rem}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
-.stat-card{background:white;border-radius:10px;padding:1.2rem 1.5rem;border:1px solid var(--border)}
-.stat-card .num{font-size:2rem;font-weight:600;line-height:1;margin-bottom:0.2rem}
-.stat-card .lbl{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid)}
-.stat-card.total .num{color:var(--dark)}
-.stat-card.pending .num{color:var(--warn)}
-.stat-card.confirmed .num{color:var(--green)}
-.stat-card.completed .num{color:var(--mid)}
-.card{background:white;border-radius:10px;border:1px solid var(--border);overflow:hidden}
-.card-head{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-head h2{font-size:0.95rem;font-weight:600;color:var(--dark)}
-.refresh-btn{background:var(--green);color:white;border:none;padding:0.45rem 1rem;border-radius:6px;font-size:0.78rem;cursor:pointer;transition:background 0.2s}
-.refresh-btn:hover{background:var(--green2)}
-table{width:100%;border-collapse:collapse}
-th{text-align:left;padding:0.75rem 1rem;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);border-bottom:1px solid var(--border);background:#faf7f0;font-weight:500}
-td{padding:0.85rem 1rem;border-bottom:1px solid var(--border);vertical-align:middle;font-size:0.82rem;color:var(--dark)}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:#faf7f0}
-.badge{display:inline-block;padding:0.2rem 0.7rem;border-radius:20px;font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;font-weight:500}
-.badge.pending{background:#fff3e0;color:#e65100}
-.badge.confirmed{background:#e8f5e0;color:#2d5016}
-.badge.completed{background:#e3f2fd;color:#1565c0}
-.badge.cancelled{background:#fce4ec;color:#880e4f}
-select.status-sel{font-size:0.75rem;padding:0.25rem 0.5rem;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;color:var(--dark)}
-.del-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0.2rem;transition:color 0.2s}
-.del-btn:hover{color:var(--danger)}
-.wa-btn{background:none;border:none;color:#25D366;cursor:pointer;font-size:1.1rem;padding:0.2rem;transition:transform 0.2s;margin-right:0.3rem}
-.wa-btn:hover{transform:scale(1.1)}
-.empty{text-align:center;padding:3rem;color:var(--mid);font-size:0.9rem}
-.loading{text-align:center;padding:3rem;color:var(--mid)}
-</style>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin — Essence Salon & Spa</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body>
-<header>
-  <h1>🌿 Essence Salon Admin Panel</h1>
-  <a href="/index.html">← Back to Website</a>
-</header>
-<div class="container">
-  <div class="stats" id="statsRow">
-    <div class="stat-card total"><div class="num" id="sTotal">—</div><div class="lbl">Total Bookings</div></div>
-    <div class="stat-card pending"><div class="num" id="sPending">—</div><div class="lbl">Pending</div></div>
-    <div class="stat-card confirmed"><div class="num" id="sConfirmed">—</div><div class="lbl">Confirmed</div></div>
-    <div class="stat-card completed"><div class="num" id="sCompleted">—</div><div class="lbl">Completed</div></div>
-  </div>
-  <div class="card">
-    <div class="card-head">
-      <h2>All Booking Inquiries</h2>
-      <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>Name</th><th>Phone</th><th>Service</th>
-            <th>Staff</th><th>Date / Time</th><th>Status</th>
-            <th>Received</th><th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="bookingsBody">
-          <tr><td colspan="9" class="loading">Loading bookings...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<script>
-const API = 'http://localhost:3001/api';
+    <header>
+        <h1>🌿 Essence Salon Admin Panel</h1>
+        <a href="index.html">← Back to Website</a>
+    </header>
 
-async function loadStats() {
-  try {
-    const r = await fetch(`${API}/admin/stats`);
-    const { data } = await r.json();
-    document.getElementById('sTotal').textContent = data.total || 0;
-    document.getElementById('sPending').textContent = data.pending || 0;
-    document.getElementById('sConfirmed').textContent = data.confirmed || 0;
-    document.getElementById('sCompleted').textContent = data.completed || 0;
-  } catch(e) { console.error(e); }
-}
+    <main class="container">
+        <!-- Stats Summary -->
+        <div class="stats" id="statsRow">
+            <div class="stat-card total">
+                <div class="num" id="sTotal">—</div>
+                <div class="lbl">Total Bookings</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="num" id="sPending">—</div>
+                <div class="lbl">Pending</div>
+            </div>
+            <div class="stat-card confirmed">
+                <div class="num" id="sConfirmed">—</div>
+                <div class="lbl">Confirmed</div>
+            </div>
+            <div class="stat-card completed">
+                <div class="num" id="sCompleted">—</div>
+                <div class="lbl">Completed</div>
+            </div>
+        </div>
 
-async function loadBookings() {
-  try {
-    const r = await fetch(`${API}/admin/bookings`);
-    const { data } = await r.json();
-    const tbody = document.getElementById('bookingsBody');
-    if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">No bookings yet.</td></tr>'; return; }
-    tbody.innerHTML = data.map(b => `
-      <tr id="row-${b.id}">
-        <td style="color:#aaa">#${b.id}</td>
-        <td><strong>${b.full_name}</strong>${b.email ? `<br><small style="color:#aaa">${b.email}</small>` : ''}</td>
-        <td><a href="tel:${b.phone}" style="color:var(--green)">${b.phone}</a></td>
-        <td>${b.service}</td>
-        <td style="color:var(--mid)">${b.staff_pref || '—'}</td>
-        <td style="font-size:0.78rem">${b.date_pref || '—'}<br><small style="color:#aaa">${b.time_slot || ''}</small></td>
-        <td>
-          <select class="status-sel" onchange="updateStatus(${b.id}, this.value, '${encodeURIComponent(b.phone)}', '${encodeURIComponent(b.full_name)}', '${encodeURIComponent(b.service)}', '${encodeURIComponent(b.date_pref || '')}', '${encodeURIComponent(b.time_slot || '')}')">
-            ${['pending','confirmed','completed','cancelled'].map(s => `<option value="${s}"${b.status===s?' selected':''}>${s}</option>`).join('')}
-          </select>
-        </td>
-        <td style="font-size:0.75rem;color:#aaa">${new Date(b.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</td>
-        <td style="white-space:nowrap">
-          <button class="wa-btn" onclick="sendWA('${encodeURIComponent(b.phone)}', '${encodeURIComponent(b.full_name)}', '${encodeURIComponent(b.service)}', '${encodeURIComponent(b.date_pref || '')}', '${encodeURIComponent(b.time_slot || '')}')" title="Send WhatsApp">💬</button>
-          <button class="del-btn" onclick="deleteBooking(${b.id})" title="Delete">🗑</button>
-        </td>
-      </tr>`).join('');
-  } catch(e) {
-    document.getElementById('bookingsBody').innerHTML = `<tr><td colspan="9" class="empty">⚠ Server not running. Start the backend first.</td></tr>`;
-  }
-}
+        <!-- Bookings Table -->
+        <div class="card">
+            <div class="card-head">
+                <h2>All Booking Inquiries</h2>
+                <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
+            </div>
+            <div style="overflow-x:auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Service</th>
+                            <th>Staff</th>
+                            <th>Date / Time</th>
+                            <th>Status</th>
+                            <th>Received</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingsBody">
+                        <tr><td colspan="9" class="loading">Loading bookings...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
-async function updateStatus(id, status, phoneEnc, nameEnc, serviceEnc, dateEnc, timeEnc) {
-  await fetch(`${API}/admin/bookings/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({status}) });
-  loadStats();
-
-  if (status === 'confirmed' && phoneEnc) {
-    if (confirm('Booking confirmed! Do you want to send a WhatsApp confirmation message to the client?')) {
-      sendWA(phoneEnc, nameEnc, serviceEnc, dateEnc, timeEnc);
-    }
-  }
-}
-
-function sendWA(phoneEnc, nameEnc, serviceEnc, dateEnc, timeEnc) {
-  const phone = decodeURIComponent(phoneEnc);
-  const name = decodeURIComponent(nameEnc);
-  const service = decodeURIComponent(serviceEnc);
-  const date = decodeURIComponent(dateEnc);
-  const time = decodeURIComponent(timeEnc);
-  
-  let cleanPhone = phone.replace(/\D/g, '');
-  if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
-  
-  let text = `Hello ${name},\n\nYour booking for *${service}* at *Essence Salon* has been confirmed! ✅\n`;
-  if (date) text += `\n📅 Date: ${date}`;
-  if (time) text += `\n⏰ Time: ${time}`;
-  text += `\n\nWe look forward to seeing you. Thank you!`;
-  
-  window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
-}
-
-async function deleteBooking(id) {
-  if (!confirm('Delete this booking?')) return;
-  await fetch(`${API}/admin/bookings/${id}`, { method:'DELETE' });
-  document.getElementById(`row-${id}`)?.remove();
-  loadStats();
-}
-
-function loadAll() { loadStats(); loadBookings(); }
-loadAll();
-</script>
+    <!-- Scripts -->
+    <script src="assets/js/admin.js"></script>
 </body>
 </html>

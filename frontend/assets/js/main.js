@@ -1,0 +1,218 @@
+const API = '/api';
+
+// --- Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Add js-enabled class for animations
+    document.body.classList.add('js-enabled');
+    
+    // Initialize Reveal Observer
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('visible');
+                obs.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.05 });
+    
+    document.querySelectorAll('.reveal').forEach(r => obs.observe(r));
+    window.revealObserver = obs; // Make global for dynamic content
+
+    // Set min date for booking
+    const dateInput = document.getElementById('f_date');
+    if (dateInput) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        dateInput.min = todayStr;
+    }
+
+    // Load Dynamic Content
+    loadServices();
+    loadTeam();
+    loadTestimonials();
+    
+    // Scroll handling for Nav
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('mainNav');
+        if (nav) nav.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Update copyright year
+    const yearEl = document.getElementById('currentYear');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+});
+
+// --- Core Functions ---
+
+async function loadServices() {
+    const grid = document.getElementById('servicesGrid');
+    if (!grid) return;
+
+    const icons = { 'Hair': '✂', 'Men': '🪒', 'Skin': '💆', 'Body': '🌿', 'Nails': '💅', 'Bridal': '👰' };
+
+    try {
+        const res = await fetch(`${API}/services`);
+        const { data } = await res.json();
+        
+        if (!data || data.length === 0) throw new Error('No services found');
+
+        const categories = {};
+        data.forEach(s => {
+            if (!categories[s.category]) categories[s.category] = [];
+            categories[s.category].push(s);
+        });
+
+        grid.innerHTML = Object.keys(categories).map(cat => `
+            <div class="svc-card reveal">
+                <span class="svc-emoji">${icons[cat] || '✨'}</span>
+                <h3 class="svc-name">${cat} Services</h3>
+                <ul class="svc-list">
+                    ${categories[cat].map(s => `
+                        <li>
+                            <div style="display:flex;justify-content:space-between;width:100%;align-items:baseline">
+                                <span>${s.name}</span>
+                                <span style="font-size:0.75rem;color:var(--accent)">₹${s.price_from}+</span>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>`).join('');
+            
+        // Observe new cards
+        document.querySelectorAll('#servicesGrid .reveal').forEach(r => window.revealObserver.observe(r));
+    } catch (err) {
+        console.error('Service loading failed:', err);
+        grid.innerHTML = '<div style="text-align:center;grid-column:1/-1;padding:3rem;color:var(--accent)">Unable to load services at this time.</div>';
+    }
+}
+
+async function loadTeam() {
+    const container = document.getElementById('teamContainer');
+    if (!container) return;
+
+    try {
+        const res = await fetch(`${API}/staff`);
+        const { data } = await res.json();
+        
+        const heads = data.filter(s => s.is_head);
+        const others = data.filter(s => !s.is_head);
+        
+        let html = '';
+        
+        if (heads.length) {
+            html += `<div class="team-grid">
+                ${heads.map(s => `
+                <div class="member-card reveal">
+                    <div class="member-img">
+                        <img src="images/founder_${s.name.toLowerCase().split(' ')[0]}.jpg" 
+                             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=1a1a1a&color=B8963E&size=500'" 
+                             alt="${s.name}">
+                    </div>
+                    <div class="member-info">
+                        <h3 class="member-name">${s.name}</h3>
+                        <span class="member-role">${s.role}</span>
+                        <p class="member-desc">${s.specialty || 'Director & Master Stylist'}</p>
+                    </div>
+                </div>`).join('')}
+            </div>`;
+        }
+        
+        if (others.length) {
+            html += `<div class="team-grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;margin-top:4rem">
+                ${others.map(s => `
+                <div class="member-card reveal" style="background:var(--bg2);border:1px solid var(--border);padding:2rem;text-align:center;display:flex;flex-direction:column;align-items:center;">
+                    <div style="width:70px;height:70px;border-radius:50%;background:rgba(184,150,62,0.08);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-family:var(--font-display);margin-bottom:1.5rem;border:1px solid var(--border)">
+                        ${s.name.charAt(0)}
+                    </div>
+                    <h4 class="member-name" style="font-size:1.3rem;margin-bottom:0.3rem">${s.name}</h4>
+                    <span class="member-role" style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text2)">${s.role}</span>
+                    <div style="margin-top:1rem;font-size:0.85rem;color:var(--text3)">${s.experience || 'Experienced Specialist'}</div>
+                </div>`).join('')}
+            </div>`;
+        }
+        
+        container.innerHTML = html;
+        document.querySelectorAll('#teamContainer .reveal').forEach(r => window.revealObserver.observe(r));
+    } catch (err) {
+        console.error('Team loading failed:', err);
+    }
+}
+
+async function loadTestimonials() {
+    const container = document.getElementById('testimonialsGrid');
+    if (!container) return;
+    
+    try {
+        const res = await fetch(`${API}/testimonials`);
+        const { data } = await res.json();
+        if (!data || data.length === 0) return;
+
+        const gridHtml = `
+            <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;padding:0 5vw">
+                ${data.map(t => `
+                <div class="reveal" style="background:var(--bg2);padding:2.5rem;border:1px solid var(--border)">
+                    <div style="color:var(--accent);font-size:1.5rem;margin-bottom:1rem">${'★'.repeat(t.rating)}</div>
+                    <p style="color:var(--text2);font-style:italic;line-height:1.7;margin-bottom:1.5rem">"${t.review}"</p>
+                    <h4 style="font-family:var(--font-display);font-size:1.1rem">- ${t.client}</h4>
+                    ${t.service ? `<small style="color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;font-size:0.7rem">${t.service}</small>` : ''}
+                </div>`).join('')}
+            </div>`;
+        
+        container.outerHTML = gridHtml;
+        document.querySelectorAll('#testimonials .reveal').forEach(r => window.revealObserver.observe(r));
+    } catch (err) {
+        console.error('Testimonials loading failed:', err);
+    }
+}
+
+async function submitBooking() {
+    const btn = document.getElementById('submitBtn');
+    const msg = document.getElementById('formMsg');
+    
+    const formData = {
+        full_name: document.getElementById('f_name').value.trim(),
+        phone: document.getElementById('f_phone').value.trim(),
+        email: (document.getElementById('f_email')?.value.trim() || ''),
+        service: document.getElementById('f_service').value,
+        staff_pref: (document.getElementById('f_staff')?.value || 'Any Available Stylist'),
+        date_pref: document.getElementById('f_date').value,
+        time_slot: (document.getElementById('f_time')?.value || ''),
+        message: (document.getElementById('f_msg')?.value.trim() || '')
+    };
+    
+    if (!formData.full_name || !formData.phone || !formData.service) {
+        msg.innerHTML = '<span style="color:#ff6b6b">⚠ Please fill in all required fields.</span>';
+        return;
+    }
+    
+    btn.disabled = true; 
+    btn.textContent = 'Processing...';
+
+    try {
+        const res = await fetch(`${API}/bookings`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(formData) 
+        });
+        const result = await res.json();
+        
+        // Prepare WhatsApp message
+        const waText = `New Inquiry from Website:\n\nName: ${formData.full_name}\nPhone: ${formData.phone}\nService: ${formData.service}\nDate: ${formData.date_pref || 'Not specified'}`;
+        const waUrl = `https://wa.me/919909706587?text=${encodeURIComponent(waText)}`;
+        
+        window.open(waUrl, '_blank');
+        msg.innerHTML = `<span style="color:var(--accent)">✅ Redirecting to WhatsApp...</span>`;
+        
+        // Clear form
+        ['f_name', 'f_phone', 'f_email', 'f_date', 'f_time', 'f_msg'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = '';
+        });
+    } catch (e) {
+        console.error('Booking failed:', e);
+        msg.innerHTML = '<span style="color:#ff6b6b">⚠ Something went wrong. Please try again.</span>';
+    } finally {
+        btn.disabled = false; 
+        btn.textContent = 'Confirm Reservation';
+        setTimeout(() => { if(msg) msg.innerHTML = ''; }, 5000);
+    }
+}
