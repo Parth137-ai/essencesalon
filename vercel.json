@@ -28,6 +28,14 @@
       "dest": "frontend/admin.html"
     },
     {
+      "src": "/manifest.json",
+      "dest": "frontend/manifest.json"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "frontend/sw.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "frontend/index.html"
     }
