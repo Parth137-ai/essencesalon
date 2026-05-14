@@ -1,21 +1,31 @@
 const { Pool } = require('pg');
+const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
 let pool;
 let db;
-const isPostgres = !!(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+const isPostgres = !!process.env.DATABASE_URL;
 const isVercel = !!process.env.VERCEL;
 
+// Attempt to load fallback data safely
+let fallbackData = { staff: [], services: [], testimonials: [] };
+try {
+  const fallbackPath = path.join(__dirname, 'fallback_data.json');
+  if (fs.existsSync(fallbackPath)) {
+    fallbackData = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
+    console.log('📦 Fallback data loaded successfully');
+  }
+} catch (e) {
+  console.error('❌ Failed to load fallback data:', e.message);
+}
+
 if (isPostgres) {
-  const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   pool = new Pool({
-    connectionString: connectionString,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
   });
-  console.log('📡 Connected to Live Postgres Database');
+  console.log('📡 Using PostgreSQL Database');
 } else if (!isVercel) {
   try {
     const sqlite3 = require('sqlite3').verbose();
@@ -27,8 +37,6 @@ if (isPostgres) {
   } catch (e) {
     console.error('❌ SQLite loading error:', e.message);
   }
-} else {
-  console.log('☁️ Running on Vercel without DATABASE_URL. Using JSON fallback for read operations.');
 }
 
 const query = async (text, params = []) => {
@@ -58,16 +66,10 @@ const query = async (text, params = []) => {
     }
   } catch (err) {
     if (isSelect) {
-      console.log('🔄 Query failed, attempting JSON fallback...');
-      try {
-        // Use a relative path that works with __dirname
-        const fallback = require('./fallback_data.json');
-        if (text.toLowerCase().includes('staff')) return { rows: fallback.staff };
-        if (text.toLowerCase().includes('services')) return { rows: fallback.services };
-        if (text.toLowerCase().includes('testimonials')) return { rows: fallback.testimonials };
-      } catch (fErr) {
-        console.error('❌ Fallback failed:', fErr.message);
-      }
+      console.log('🔄 Query failed, using JSON fallback for:', text);
+      if (text.toLowerCase().includes('staff')) return { rows: fallbackData.staff };
+      if (text.toLowerCase().includes('services')) return { rows: fallbackData.services };
+      if (text.toLowerCase().includes('testimonials')) return { rows: fallbackData.testimonials };
     }
     throw err;
   }
@@ -75,7 +77,7 @@ const query = async (text, params = []) => {
 
 let isInitializing = false;
 const initializeDatabase = async () => {
-  if (isInitializing || isVercel && !isPostgres) return;
+  if (isInitializing || (isVercel && !isPostgres)) return;
   isInitializing = true;
   
   try {
@@ -148,7 +150,6 @@ const seedData = async () => {
       for (const s of staff) {
         await query(`INSERT INTO staff (name, role, experience, specialty, phone, is_head) VALUES ($1,$2,$3,$4,$5,$6)`, s);
       }
-      console.log('✅ Staff data seeded');
     }
 
     const serviceCount = await query("SELECT COUNT(*) as count FROM services");
@@ -168,7 +169,6 @@ const seedData = async () => {
       for (const s of services) {
         await query(`INSERT INTO services (name, description, price_from, price_upto, category, gender) VALUES ($1,$2,$3,$4,$5,$6)`, s);
       }
-      console.log('✅ Services data seeded');
     }
   } catch (err) {
     console.error('❌ Seeding Error:', err.message);
