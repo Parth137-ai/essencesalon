@@ -23,26 +23,24 @@ The project is divided into two main parts:
 - **Database**: SQLite3
 - **Other Dependencies**: `cors`, `body-parser`
 
+## Contact & Social
+
+- **Instagram**: [essencesalon.in](https://www.instagram.com/essencesalon.in?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==)
+- **WhatsApp**: [9909706587](https://wa.me/919909706587)
+- **Address**: 104, 1st Floor, Dev Aditya, Thaltej - Shilaj Rd, Nr. Baghban Party Plot, Thaltej, Ahmedabad – 380059
+
 ## Setup and Installation
 
 1. **Backend Setup**:
-   - Navigate to the backend directory:
-     ```bash
-     cd backend
-     ```
-   - Install dependencies:
-     ```bash
-     npm install
-     ```
-   - Start the server:
-     ```bash
-     npm start
-     ```
+   - Navigate to the backend directory: `cd backend`
+   - Install dependencies: `npm install`
+   - Start the server: `npm start`
 
 2. **Frontend Setup**:
-   - Open the frontend files (`frontend/index.html` and `frontend/admin.html`) in your web browser. Or, use a static file server like Live Server (VS Code extension) to serve the `frontend` directory.
+   - The frontend is served by the backend at `http://localhost:3001`.
+   - Alternatively, use a static file server to serve the `frontend` directory.
 
 ## Usage
 
-- Clients can visit the main page (`index.html`) to view services and book appointments.
-- Administrators can visit the admin page (`admin.html`) to review bookings and manage the salon's schedules.
+- **Website**: Visit `http://localhost:3001` to view services and book appointments.
+- **Admin**: Visit `http://localhost:3001/admin.html` to manage bookings. Use the master password to login.
