@@ -16,10 +16,14 @@ if (isPostgres) {
   });
   console.log('📡 Using PostgreSQL Database');
 } else {
-  const dbPath = path.join(__dirname, '../essence_salon.db');
+  // Use /tmp for SQLite on Vercel as it's the only writable directory
+  const dbPath = process.env.VERCEL 
+    ? path.join('/tmp', 'essence_salon.db') 
+    : path.join(__dirname, '../essence_salon.db');
+    
   db = new sqlite3.Database(dbPath, (err) => {
     if (err) console.error('❌ SQLite connection error:', err.message);
-    else console.log('📁 Using local SQLite Database');
+    else console.log(`📁 Using SQLite Database at: ${dbPath}`);
   });
 }
 
