@@ -1,49 +1,46 @@
 const { Pool } = require('pg');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 require('dotenv').config();
 
 let pool;
 let db;
 const isPostgres = !!process.env.DATABASE_URL;
+const isVercel = !!process.env.VERCEL;
 
 if (isPostgres) {
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
   });
   console.log('📡 Using PostgreSQL Database');
+} else if (!isVercel) {
+  try {
+    const sqlite3 = require('sqlite3').verbose();
+    const dbPath = path.join(__dirname, '../essence_salon.db');
+    db = new sqlite3.Database(dbPath, (err) => {
+      if (err) console.error('❌ SQLite connection error:', err.message);
+      else console.log(`📁 Using SQLite Database at: ${dbPath}`);
+    });
+  } catch (e) {
+    console.error('❌ SQLite loading error:', e.message);
+  }
 } else {
-  // Use /tmp for SQLite on Vercel as it's the only writable directory
-  const dbPath = process.env.VERCEL 
-    ? path.join('/tmp', 'essence_salon.db') 
-    : path.join(__dirname, '../essence_salon.db');
-    
-  db = new sqlite3.Database(dbPath, (err) => {
-    if (err) console.error('❌ SQLite connection error:', err.message);
-    else console.log(`📁 Using SQLite Database at: ${dbPath}`);
-  });
+  console.log('☁️ Running on Vercel without DATABASE_URL. Using JSON fallback for read operations.');
 }
 
 const query = async (text, params = []) => {
+  const isSelect = text.trim().toUpperCase().startsWith('SELECT');
+  
   try {
     if (isPostgres) {
       return await pool.query(text, params);
-    } else {
-      if (!db) throw new Error('Database not initialized');
-      
+    } else if (db) {
       let sqliteText = text.replace(/\$\d+/g, '?');
       const hasReturning = sqliteText.toUpperCase().includes('RETURNING');
-      if (hasReturning) {
-        sqliteText = sqliteText.split(/RETURNING/i)[0].trim();
-      }
+      if (hasReturning) sqliteText = sqliteText.split(/RETURNING/i)[0].trim();
 
       return new Promise((resolve, reject) => {
-        const isSelect = sqliteText.trim().toUpperCase().startsWith('SELECT');
         const method = isSelect ? 'all' : 'run';
-        
         db[method](sqliteText, params, function(err, rows) {
           if (err) reject(err);
           else {
@@ -53,19 +50,20 @@ const query = async (text, params = []) => {
           }
         });
       });
+    } else {
+      throw new Error('Database not available');
     }
   } catch (err) {
-    console.error('❌ Database Query Error:', err.message);
-    
-    // Fallback for SELECT queries in serverless environments
-    if (text.trim().toUpperCase().startsWith('SELECT')) {
+    if (isSelect) {
+      console.log('🔄 Query failed, attempting JSON fallback...');
       try {
+        // Use a relative path that works with __dirname
         const fallback = require('./fallback_data.json');
         if (text.toLowerCase().includes('staff')) return { rows: fallback.staff };
         if (text.toLowerCase().includes('services')) return { rows: fallback.services };
         if (text.toLowerCase().includes('testimonials')) return { rows: fallback.testimonials };
       } catch (fErr) {
-        console.error('❌ Fallback Error:', fErr.message);
+        console.error('❌ Fallback failed:', fErr.message);
       }
     }
     throw err;
@@ -74,14 +72,12 @@ const query = async (text, params = []) => {
 
 let isInitializing = false;
 const initializeDatabase = async () => {
-  if (isInitializing) return;
+  if (isInitializing || isVercel && !isPostgres) return;
   isInitializing = true;
   
   try {
-    const autoIncrement = isPostgres ? 'SERIAL' : 'INTEGER';
     const primaryKey = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
 
-    // Bookings table
     await query(`CREATE TABLE IF NOT EXISTS bookings (
       id          ${primaryKey},
       full_name   TEXT NOT NULL,
@@ -96,7 +92,6 @@ const initializeDatabase = async () => {
       created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    // Staff table
     await query(`CREATE TABLE IF NOT EXISTS staff (
       id         ${primaryKey},
       name       TEXT NOT NULL,
@@ -107,7 +102,6 @@ const initializeDatabase = async () => {
       is_head    INTEGER DEFAULT 0
     )`);
 
-    // Services table
     await query(`CREATE TABLE IF NOT EXISTS services (
       id          ${primaryKey},
       name        TEXT NOT NULL,
@@ -118,7 +112,6 @@ const initializeDatabase = async () => {
       gender      TEXT DEFAULT 'unisex'
     )`);
 
-    // Testimonials table
     await query(`CREATE TABLE IF NOT EXISTS testimonials (
       id        ${primaryKey},
       client    TEXT NOT NULL,
@@ -138,7 +131,6 @@ const initializeDatabase = async () => {
 
 const seedData = async () => {
   try {
-    // Seed Staff
     const staffCount = await query("SELECT COUNT(*) as count FROM staff");
     const count = isPostgres ? parseInt(staffCount.rows[0].count) : staffCount.rows[0].count;
     
@@ -156,7 +148,6 @@ const seedData = async () => {
       console.log('✅ Staff data seeded');
     }
 
-    // Seed Services
     const serviceCount = await query("SELECT COUNT(*) as count FROM services");
     const sCount = isPostgres ? parseInt(serviceCount.rows[0].count) : serviceCount.rows[0].count;
 
