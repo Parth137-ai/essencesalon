@@ -139,36 +139,44 @@ const seedData = async () => {
     const staffCount = await query("SELECT COUNT(*) as count FROM staff");
     const count = isPostgres ? parseInt(staffCount.rows[0].count) : staffCount.rows[0].count;
     
-    if (count === 0) {
-      const staff = [
-        ['Vipul Valand', 'Co-Founder & Head Stylist', '20+ Years', 'Master Hair Styling, Advanced Colour, Men & Women Cuts', '9909706587', 1],
-        ['Bhavesh Sharma', 'Co-Founder & Beauty Director', '22+ Years', 'Bridal Makeovers, Skin Treatments, Unisex Styling, Spa Therapies', '9909706587', 1],
-        ['Mahesh Valand', "Men's Specialist", '15+ Years', "Men's Haircut, Beard Grooming, Shave, Hair Spa", null, 0],
-        ['Dharti', "Women's Specialist", '5+ Years', "Ladies Haircut, Facial, Waxing, Bridal Prep, Mehandi", null, 0],
-        ['Ankit Sharma', "Men's Specialist", '8+ Years', "Men's Cut, Beard Art, Colour, Hair Treatments", null, 0]
-      ];
+    const staff = [
+      ['Vipul Valand', 'Co-Founder & Head Stylist', '20+ Years', 'Master Hair Styling, Advanced Colour, Men & Women Cuts', '9909706587', 1],
+      ['Bhavesh Sharma', 'Co-Founder & Beauty Director', '22+ Years', 'Bridal Makeovers, Skin Treatments, Unisex Styling, Spa Therapies', '9909706587', 1],
+      ['Mahesh Valand', "Men's Specialist", '15+ Years', "Men's Haircut, Beard Grooming, Shave, Hair Spa", null, 0],
+      ['Dharti', "Women's Specialist", '5+ Years', "Ladies Haircut, Facial, Waxing, Bridal Prep, Mehandi", null, 0],
+      ['Ankit Sharma', "Men's Specialist", '8+ Years', "Men's Cut, Beard Art, Colour, Hair Treatments", null, 0]
+    ];
+
+    if (count < staff.length) {
+      console.log('🔄 Re-seeding staff to ensure all members are present...');
+      await query("DELETE FROM staff");
       for (const s of staff) {
         await query(`INSERT INTO staff (name, role, experience, specialty, phone, is_head) VALUES ($1,$2,$3,$4,$5,$6)`, s);
       }
+      console.log('✅ Staff data seeded');
     }
 
     const serviceCount = await query("SELECT COUNT(*) as count FROM services");
     const sCount = isPostgres ? parseInt(serviceCount.rows[0].count) : serviceCount.rows[0].count;
 
-    if (sCount === 0) {
-      const services = [
-        ['Haircut & Styling', 'Precision cuts and styling.', 500, 1200, 'Hair', 'unisex'],
-        ['Hair Color & Highlights', 'Advanced color techniques.', 2500, null, 'Hair', 'unisex'],
-        ['Beard & Shave', 'Classic grooming for men.', 300, null, 'Men', 'men'],
-        ['Hair Spa & Keratin', 'Deep conditioning treatments.', 500, 1000, 'Hair', 'unisex'],
-        ['Facial & Skin Care', 'Brightening and anti-aging.', 1000, 4000, 'Skin', 'unisex'],
-        ['Waxing & Threading', 'Precision body grooming.', 700, 2000, 'Body', 'women'],
-        ['Nail Studio', 'Manicure and nail art.', 300, 1000, 'Nails', 'unisex'],
-        ['Bridal Packages', 'Complete bridal beauty.', 10000, 20000, 'Bridal', 'women']
-      ];
+    const services = [
+      ['Haircut & Styling', 'Precision cuts and styling.', 500, 1200, 'Hair', 'unisex'],
+      ['Hair Color & Highlights', 'Advanced color techniques.', 2500, null, 'Hair', 'unisex'],
+      ['Beard & Shave', 'Classic grooming for men.', 300, null, 'Men', 'men'],
+      ['Hair Spa & Keratin', 'Deep conditioning treatments.', 500, 1000, 'Hair', 'unisex'],
+      ['Facial & Skin Care', 'Brightening and anti-aging.', 1000, 4000, 'Skin', 'unisex'],
+      ['Waxing & Threading', 'Precision body grooming.', 700, 2000, 'Body', 'women'],
+      ['Nail Studio', 'Manicure and nail art.', 300, 1000, 'Nails', 'unisex'],
+      ['Bridal Packages', 'Complete bridal beauty.', 10000, 20000, 'Bridal', 'women']
+    ];
+
+    if (sCount < services.length) {
+      console.log('🔄 Re-seeding services to ensure all items are present...');
+      await query("DELETE FROM services");
       for (const s of services) {
         await query(`INSERT INTO services (name, description, price_from, price_upto, category, gender) VALUES ($1,$2,$3,$4,$5,$6)`, s);
       }
+      console.log('✅ Services data seeded');
     }
   } catch (err) {
     console.error('❌ Seeding Error:', err.message);
