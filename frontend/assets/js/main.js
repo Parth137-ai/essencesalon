@@ -175,9 +175,17 @@ async function loadTestimonials() {
             return;
         }
 
+        // Deduplicate testimonials by client name
+        const seen = new Set();
+        const uniqueData = data.filter(t => {
+            if (seen.has(t.client)) return false;
+            seen.add(t.client);
+            return true;
+        });
+
         const gridHtml = `
             <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;padding:0 5vw">
-                ${data.map(t => `
+                ${uniqueData.map(t => `
                 <div class="reveal" style="background:var(--bg2);padding:2.5rem;border:1px solid var(--border)">
                     <div style="color:var(--accent);font-size:1.5rem;margin-bottom:1rem">${'★'.repeat(t.rating || 5)}</div>
                     <p style="color:var(--text2);font-style:italic;line-height:1.7;margin-bottom:1.5rem">"${t.review}"</p>

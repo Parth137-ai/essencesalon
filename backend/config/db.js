@@ -210,8 +210,8 @@ const seedData = async () => {
       ['Simran Kaur', 'Dharti is so talented! My hair looks stunning after the keratin treatment.', 5, 'Hair Spa & Keratin', 1]
     ];
 
-    if (tCount < testimonials.length) {
-      console.log('🔄 Seeding testimonials...');
+    if (tCount !== testimonials.length) {
+      console.log('🔄 Seeding testimonials (count mismatch)...');
       await query("DELETE FROM testimonials");
       for (const t of testimonials) {
         await query(`INSERT INTO testimonials (client, review, rating, service, approved) VALUES ($1,$2,$3,$4,$5)`, t);
