@@ -111,8 +111,16 @@ async function loadTeam() {
         const res = await fetch(`${API}/staff`);
         const { data } = await res.json();
         
-        const heads = data.filter(s => s.is_head);
-        const others = data.filter(s => !s.is_head);
+        // Deduplicate staff by name to prevent double-rendering
+        const seen = new Set();
+        const uniqueData = data.filter(s => {
+            if (seen.has(s.name)) return false;
+            seen.add(s.name);
+            return true;
+        });
+        
+        const heads = uniqueData.filter(s => s.is_head);
+        const others = uniqueData.filter(s => !s.is_head);
         
         let html = '';
         
@@ -162,13 +170,16 @@ async function loadTestimonials() {
     try {
         const res = await fetch(`${API}/testimonials`);
         const { data } = await res.json();
-        if (!data || data.length === 0) return;
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text3)">No reviews yet. Be the first to share your experience!</div>';
+            return;
+        }
 
         const gridHtml = `
             <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;padding:0 5vw">
                 ${data.map(t => `
                 <div class="reveal" style="background:var(--bg2);padding:2.5rem;border:1px solid var(--border)">
-                    <div style="color:var(--accent);font-size:1.5rem;margin-bottom:1rem">${'★'.repeat(t.rating)}</div>
+                    <div style="color:var(--accent);font-size:1.5rem;margin-bottom:1rem">${'★'.repeat(t.rating || 5)}</div>
                     <p style="color:var(--text2);font-style:italic;line-height:1.7;margin-bottom:1.5rem">"${t.review}"</p>
                     <h4 style="font-family:var(--font-display);font-size:1.1rem">- ${t.client}</h4>
                     ${t.service ? `<small style="color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;font-size:0.7rem">${t.service}</small>` : ''}
@@ -179,6 +190,7 @@ async function loadTestimonials() {
         document.querySelectorAll('#testimonials .reveal').forEach(r => window.revealObserver.observe(r));
     } catch (err) {
         console.error('Testimonials loading failed:', err);
+        if (container) container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text3)">Unable to load reviews at this time.</div>';
     }
 }
 

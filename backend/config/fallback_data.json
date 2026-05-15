@@ -112,13 +112,43 @@
       "client": "Aarav Mehta",
       "review": "Best salon experience in Thaltej. Vipul is a master of his craft!",
       "rating": 5,
-      "service": "Haircut"
+      "service": "Haircut",
+      "approved": 1
     },
     {
       "client": "Priya Shah",
-      "review": "Loved the bridal package. Bhavesh and the team are amazing.",
+      "review": "Loved the bridal package. Bhavesh and the team are absolutely amazing.",
       "rating": 5,
-      "service": "Bridal"
+      "service": "Bridal",
+      "approved": 1
+    },
+    {
+      "client": "Rohan Patel",
+      "review": "Clean, professional and incredibly skilled. My go-to salon in Ahmedabad.",
+      "rating": 5,
+      "service": "Hair Spa",
+      "approved": 1
+    },
+    {
+      "client": "Nisha Joshi",
+      "review": "The facial treatment was heavenly. My skin glowed for weeks after the visit!",
+      "rating": 5,
+      "service": "Facial",
+      "approved": 1
+    },
+    {
+      "client": "Karan Desai",
+      "review": "Ankit did an amazing beard art. Precise, creative and worth every rupee!",
+      "rating": 5,
+      "service": "Beard Grooming",
+      "approved": 1
+    },
+    {
+      "client": "Simran Kaur",
+      "review": "Dharti is so talented! My hair looks absolutely stunning after the keratin treatment.",
+      "rating": 5,
+      "service": "Hair Spa & Keratin",
+      "approved": 1
     }
   ]
 }

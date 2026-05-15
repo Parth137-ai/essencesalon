@@ -39,33 +39,53 @@ const query = async (text, params = []) => {
   const isSelect = text.trim().toUpperCase().startsWith('SELECT');
   
   try {
+    let result;
     if (isPostgres) {
-      return await pool.query(text, params);
+      result = await pool.query(text, params);
     } else if (db) {
       let sqliteText = text.replace(/\$\d+/g, '?');
       const hasReturning = sqliteText.toUpperCase().includes('RETURNING');
       if (hasReturning) sqliteText = sqliteText.split(/RETURNING/i)[0].trim();
 
-      return new Promise((resolve, reject) => {
+      result = await new Promise((resolve, reject) => {
         const method = isSelect ? 'all' : 'run';
         db[method](sqliteText, params, function(err, rows) {
           if (err) reject(err);
           else {
-            const result = { rows: rows || [], lastID: this?.lastID, changes: this?.changes };
-            if (hasReturning) result.rows = [{ id: this.lastID }];
-            resolve(result);
+            const r = { rows: rows || [], lastID: this?.lastID, changes: this?.changes };
+            if (hasReturning) r.rows = [{ id: this.lastID }];
+            resolve(r);
           }
         });
       });
     } else {
       throw new Error('Database not available');
     }
+
+    // If SELECT returned 0 rows for key tables, use JSON fallback
+    if (isSelect && result && result.rows && result.rows.length === 0) {
+      const lc = text.toLowerCase();
+      if (lc.includes('from staff') && !lc.includes('count')) {
+        console.log('⚠️ Empty staff from DB, using JSON fallback');
+        return { rows: fallbackData.staff || [] };
+      }
+      if (lc.includes('from services') && !lc.includes('count')) {
+        console.log('⚠️ Empty services from DB, using JSON fallback');
+        return { rows: fallbackData.services || [] };
+      }
+      if (lc.includes('from testimonials') && !lc.includes('count')) {
+        console.log('⚠️ Empty testimonials from DB, using JSON fallback');
+        return { rows: fallbackData.testimonials || [] };
+      }
+    }
+
+    return result;
   } catch (err) {
     if (isSelect) {
       console.log('🔄 Query failed, using JSON fallback for:', text);
-      if (text.toLowerCase().includes('staff')) return { rows: fallbackData.staff };
-      if (text.toLowerCase().includes('services')) return { rows: fallbackData.services };
-      if (text.toLowerCase().includes('testimonials')) return { rows: fallbackData.testimonials };
+      if (text.toLowerCase().includes('staff')) return { rows: fallbackData.staff || [] };
+      if (text.toLowerCase().includes('service')) return { rows: fallbackData.services || [] };
+      if (text.toLowerCase().includes('testimonial')) return { rows: fallbackData.testimonials || [] };
     }
     throw err;
   }
@@ -132,6 +152,7 @@ const initializeDatabase = async () => {
 
 const seedData = async () => {
   try {
+    // --- Staff ---
     const staffCount = await query("SELECT COUNT(*) as count FROM staff");
     const count = isPostgres ? parseInt(staffCount.rows[0].count) : staffCount.rows[0].count;
     
@@ -143,8 +164,8 @@ const seedData = async () => {
       ['Ankit Sharma', "Men's Specialist", '8+ Years', "Men's Cut, Beard Art, Colour, Hair Treatments", null, 0]
     ];
 
-    if (count < staff.length) {
-      console.log('🔄 Re-seeding staff to ensure all members are present...');
+    if (count !== staff.length) {
+      console.log('🔄 Re-seeding staff (count mismatch)...');
       await query("DELETE FROM staff");
       for (const s of staff) {
         await query(`INSERT INTO staff (name, role, experience, specialty, phone, is_head) VALUES ($1,$2,$3,$4,$5,$6)`, s);
@@ -152,6 +173,7 @@ const seedData = async () => {
       console.log('✅ Staff data seeded');
     }
 
+    // --- Services ---
     const serviceCount = await query("SELECT COUNT(*) as count FROM services");
     const sCount = isPostgres ? parseInt(serviceCount.rows[0].count) : serviceCount.rows[0].count;
 
@@ -166,13 +188,35 @@ const seedData = async () => {
       ['Bridal Packages', 'Complete bridal beauty.', 10000, 20000, 'Bridal', 'women']
     ];
 
-    if (sCount < services.length) {
-      console.log('🔄 Re-seeding services to ensure all items are present...');
+    if (sCount !== services.length) {
+      console.log('🔄 Re-seeding services (count mismatch)...');
       await query("DELETE FROM services");
       for (const s of services) {
         await query(`INSERT INTO services (name, description, price_from, price_upto, category, gender) VALUES ($1,$2,$3,$4,$5,$6)`, s);
       }
       console.log('✅ Services data seeded');
+    }
+
+    // --- Testimonials ---
+    const testCount = await query("SELECT COUNT(*) as count FROM testimonials");
+    const tCount = isPostgres ? parseInt(testCount.rows[0].count) : testCount.rows[0].count;
+
+    const testimonials = [
+      ['Aarav Mehta', 'Best salon experience in Thaltej. Vipul is a master of his craft!', 5, 'Haircut', 1],
+      ['Priya Shah', 'Loved the bridal package. Bhavesh and the team are absolutely amazing.', 5, 'Bridal', 1],
+      ['Rohan Patel', 'Clean, professional and incredibly skilled. My go-to salon in Ahmedabad.', 5, 'Hair Spa', 1],
+      ['Nisha Joshi', 'The facial treatment was heavenly. My skin glowed for weeks!', 5, 'Facial', 1],
+      ['Karan Desai', 'Ankit did an amazing beard art. Worth every rupee!', 5, 'Beard Grooming', 1],
+      ['Simran Kaur', 'Dharti is so talented! My hair looks stunning after the keratin treatment.', 5, 'Hair Spa & Keratin', 1]
+    ];
+
+    if (tCount < testimonials.length) {
+      console.log('🔄 Seeding testimonials...');
+      await query("DELETE FROM testimonials");
+      for (const t of testimonials) {
+        await query(`INSERT INTO testimonials (client, review, rating, service, approved) VALUES ($1,$2,$3,$4,$5)`, t);
+      }
+      console.log('✅ Testimonials data seeded');
     }
   } catch (err) {
     console.error('❌ Seeding Error:', err.message);
