@@ -18,10 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.reveal').forEach(r => obs.observe(r));
     window.revealObserver = obs; // Make global for dynamic content
 
-    // Set min date for booking
+    // Set min date for booking (Asia/Kolkata Timezone)
     const dateInput = document.getElementById('f_date');
     if (dateInput) {
-        const todayStr = new Date().toISOString().split('T')[0];
+        // Use Intl.DateTimeFormat to get exactly YYYY-MM-DD in IST
+        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
         dateInput.min = todayStr;
     }
 
@@ -68,10 +69,13 @@ function setupFormValidation() {
     const emailInput = document.getElementById('f_email');
     const nameInput = document.getElementById('f_name');
     const serviceInput = document.getElementById('f_service');
+    const timeInput = document.getElementById('f_time');
+    const dateInput = document.getElementById('f_date');
     const submitBtn = document.getElementById('submitBtn');
     
     const phoneError = document.getElementById('phoneError');
     const emailError = document.getElementById('emailError');
+    const timeError = document.getElementById('timeError');
 
     const phoneRegex = /^[0-9]{10}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -116,20 +120,22 @@ function setupFormValidation() {
         }
 
         // Time Validation (Must be between 10:00 and 20:00, 30 min intervals)
-        const timeInput = document.getElementById('f_time');
         if (timeInput && timeInput.value) {
             const [hours, mins] = timeInput.value.split(':').map(Number);
             if (hours < 10 || hours > 20 || (hours === 20 && mins > 0) || (mins !== 0 && mins !== 30)) {
                 timeInput.style.borderColor = '#ff6b6b';
+                if (timeError) timeError.style.display = 'block';
                 isValid = false;
             } else {
                 timeInput.style.borderColor = '#4caf50';
+                if (timeError) timeError.style.display = 'none';
             }
-        } else if (timeInput) {
-             timeInput.style.borderColor = 'var(--border)';
+        } else {
+            if (timeInput) timeInput.style.borderColor = 'var(--border)';
+            if (timeError) timeError.style.display = 'none';
+            isValid = false; // Required
         }
 
-        const dateInput = document.getElementById('f_date');
         if (dateInput && dateInput.value) {
             dateInput.style.borderColor = '#4caf50';
         } else if (dateInput) {
@@ -156,12 +162,8 @@ function setupFormValidation() {
     if (emailInput) emailInput.addEventListener('input', validateForm);
     if (nameInput) nameInput.addEventListener('input', validateForm);
     if (serviceInput) serviceInput.addEventListener('change', validateForm);
-    
-    const timeInput = document.getElementById('f_time');
-    if (timeInput) timeInput.addEventListener('input', validateForm);
-    
-    const dateInput = document.getElementById('f_date');
-    if (dateInput) dateInput.addEventListener('input', validateForm);
+    if (timeInput) timeInput.addEventListener('change', validateForm);
+    if (dateInput) dateInput.addEventListener('change', validateForm);
 }
 
 
