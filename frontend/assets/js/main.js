@@ -57,7 +57,113 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // Form Validation Logic
+    setupFormValidation();
 });
+
+// --- Validation Functions ---
+function setupFormValidation() {
+    const phoneInput = document.getElementById('f_phone');
+    const emailInput = document.getElementById('f_email');
+    const nameInput = document.getElementById('f_name');
+    const serviceInput = document.getElementById('f_service');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    const phoneError = document.getElementById('phoneError');
+    const emailError = document.getElementById('emailError');
+
+    const phoneRegex = /^[0-9]{10}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    function validateForm() {
+        let isValid = true;
+
+        // Name and Service required
+        if (!nameInput?.value.trim() || !serviceInput?.value) {
+            isValid = false;
+        }
+
+        // Phone Validation
+        if (phoneInput && phoneInput.value) {
+            if (!phoneRegex.test(phoneInput.value)) {
+                phoneInput.style.borderColor = '#ff6b6b';
+                if (phoneError) phoneError.style.display = 'block';
+                isValid = false;
+            } else {
+                phoneInput.style.borderColor = '#4caf50';
+                if (phoneError) phoneError.style.display = 'none';
+            }
+        } else {
+            if (phoneInput) phoneInput.style.borderColor = 'var(--border)';
+            if (phoneError) phoneError.style.display = 'none';
+            isValid = false; // required field
+        }
+
+        // Email Validation (Optional, but if filled must be valid)
+        if (emailInput && emailInput.value) {
+            if (!emailRegex.test(emailInput.value)) {
+                emailInput.style.borderColor = '#ff6b6b';
+                if (emailError) emailError.style.display = 'block';
+                isValid = false;
+            } else {
+                emailInput.style.borderColor = '#4caf50';
+                if (emailError) emailError.style.display = 'none';
+            }
+        } else {
+            if (emailInput) emailInput.style.borderColor = 'var(--border)';
+            if (emailError) emailError.style.display = 'none';
+        }
+
+        // Time Validation (Must be between 10:00 and 20:00, 30 min intervals)
+        const timeInput = document.getElementById('f_time');
+        if (timeInput && timeInput.value) {
+            const [hours, mins] = timeInput.value.split(':').map(Number);
+            if (hours < 10 || hours > 20 || (hours === 20 && mins > 0) || (mins !== 0 && mins !== 30)) {
+                timeInput.style.borderColor = '#ff6b6b';
+                isValid = false;
+            } else {
+                timeInput.style.borderColor = '#4caf50';
+            }
+        } else if (timeInput) {
+             timeInput.style.borderColor = 'var(--border)';
+        }
+
+        const dateInput = document.getElementById('f_date');
+        if (dateInput && dateInput.value) {
+            dateInput.style.borderColor = '#4caf50';
+        } else if (dateInput) {
+            dateInput.style.borderColor = 'var(--border)';
+        }
+
+        if (nameInput && nameInput.value.trim()) nameInput.style.borderColor = '#4caf50';
+        if (serviceInput && serviceInput.value) serviceInput.style.borderColor = '#4caf50';
+
+        // Toggle Button
+        if (submitBtn) {
+            submitBtn.disabled = !isValid;
+            submitBtn.style.opacity = isValid ? '1' : '0.5';
+            submitBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
+        }
+    }
+
+    // Attach real-time listeners
+    if (phoneInput) phoneInput.addEventListener('input', () => {
+        // Prevent typing non-digits
+        phoneInput.value = phoneInput.value.replace(/[^0-9]/g, '');
+        validateForm();
+    });
+    if (emailInput) emailInput.addEventListener('input', validateForm);
+    if (nameInput) nameInput.addEventListener('input', validateForm);
+    if (serviceInput) serviceInput.addEventListener('change', validateForm);
+    
+    const timeInput = document.getElementById('f_time');
+    if (timeInput) timeInput.addEventListener('input', validateForm);
+    
+    const dateInput = document.getElementById('f_date');
+    if (dateInput) dateInput.addEventListener('input', validateForm);
+}
+
 
 // --- Core Functions ---
 
